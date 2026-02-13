@@ -1,200 +1,85 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<!-- Head tag -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="index, follow"><title> • Hexo</title><meta name="description" content=" - John Doe"><link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="https://unpkg.com/nanoreset@3.0.1/nanoreset.min.css"><link rel="stylesheet" href="/css/theme.css"><link rel="search" type="application/opensearchdescription+xml" href="/atom.xml" title="Hexo"><meta name="generator" content="Hexo 8.1.1"></head><body><div class="wrap" id="barba-wrapper"><header><h1 class="branding"><a href="/" title="Hexo"><img class="logo-image" src="/logo.svg" alt="logo"></a></h1><ul class="nav nav-list"><li class="nav-list-item"><a class="nav-list-link no-barba" href="/" target="_self">HOME</a></li><li class="nav-list-item"><a class="nav-list-link no-barba" href="/about" target="_self">ABOUT</a></li><li class="nav-list-item"><a class="nav-list-link no-barba" href="/archives" target="_self">ARCHIVES</a></li><li class="nav-list-item"></ul></header><div class="barba-container"><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">(untitled)</h1><div class="post-content"><!doctype html>
+<html lang="zh-CN">
 <head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <meta name="description" content="">
-  <meta name="author" content="">
-  <link rel="icon" href="/img/favicon.png">
-
-  
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css">
-
-  
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5/dist/css/bootstrap.min.css">
-
-
-  
-<link rel="stylesheet" href="/css/style.css">
-
-
-  
-  <title>Hexo</title>
-<meta name="generator" content="Hexo 8.1.1"></head>
-
-
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Jokerface - Upload</title>
+  <style>
+    html, body { height: 100%; margin: 0; }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: url("/assets/bg.jpeg") center/contain no-repeat fixed;
+      display: grid;
+      place-items: center;
+    }
+    .card {
+      width: min(720px, calc(100vw - 32px));
+      background: rgba(0,0,0,0.55);
+      color: #fff;
+      border-radius: 16px;
+      padding: 20px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+    input[type="file"] { color: #fff; }
+    button {
+      padding: 10px 14px; border: 0; border-radius: 10px;
+      cursor: pointer; font-weight: 600;
+    }
+    pre {
+      margin-top: 14px;
+      background: rgba(0,0,0,0.45);
+      padding: 12px;
+      border-radius: 12px;
+      overflow: auto;
+      max-height: 240px;
+    }
+    img { max-width: 180px; border-radius: 12px; display: none; }
+  </style>
+</head>
 <body>
-  <header>
-    <nav id="navbar" class="navbar fixed-nav scrolling-navbar">
-  <div class="container">
-    <div class="mark-wrapper">
-       
-      <div class="title-mark">Peomas</div>
+  <div class="card">
+    <h2 style="margin:0;">Upload an image</h2>
+    <div class="row">
+      <input id="file" type="file" accept="image/*" />
+      <button id="btn">Analyze</button>
+      <img id="preview" alt="preview" />
     </div>
-  
-    <button id="menu-btn" class="btn menu-btn" type="button" data-bs-toggle="collapse" data-bs-target="#nav-menu">
-      <div class="menu-icon"><span></span><span></span><span></span></div>
-    </button>
-  
-    <div id="nav-menu" class="collapse menu-wrapper">
-      <ul>
-        
-          <li>
-            <a href="/">Home </a>
-          </li>
-        
-          <li>
-            <a href="/archives">Archives </a>
-          </li>
-        
-          <li>
-            <a href="/categories">Category </a>
-          </li>
-        
-          <li>
-            <a href="/tags">Tag </a>
-          </li>
-        
-          <li>
-            <a href="/about">About </a>
-          </li>
-        
-        <li class="search-icon">
-          <button class="btn" data-bs-toggle="modal" data-bs-target="#searchModal" aria-label="Search">
-            <i class="fas fa-search"></i>
-          </button>
-        </li>
-      </ul>
-    </div>
+    <pre id="out">{ "status": "waiting" }</pre>
   </div>
-</nav>
 
-  </header>
+  <script>
+    // TODO: 改成你 Node API 的 Zeabur 域名（示例）
+    const API_BASE = "https://YOUR-API.zeabur.app";
 
-  <main>
-    <div class="container">
-      <div id="main">
-        <div class="row py-5">
-          <div class="col">
-            <div class="index-wrapper">
-  
-    <article class="row index-post-wrapper">
-      
-      <div class="col-12 col-md-12 mx-auto post-intro">
-        <div class="post-header ">
-          <a href="/2026/02/13/hello-world/" target="_self">
-            <h3>Hello World</h3>
-          </a>
-          
-        </div>
-        <div class="description">
-          
-            Welcome to Hexo! This is your very first post. Check documentation for more info. If you get any problems when using Hexo, you can find the answer in troubleshooting or you can ask me on GitHub.
-Quick...
-          
-        </div>
-        <div class="post-footer">
-          <time datetime="2026-02-13 11:55" pubdate>
-            2026-02-13
-          </time>
-          <div>
-             
-            
-          </div>
-        </div>
-      </div>
-    </article>
-   
-</div>
+    const fileEl = document.getElementById("file");
+    const out = document.getElementById("out");
+    const preview = document.getElementById("preview");
 
+    fileEl.addEventListener("change", () => {
+      const f = fileEl.files?.[0];
+      if (!f) return;
+      preview.src = URL.createObjectURL(f);
+      preview.style.display = "block";
+      out.textContent = JSON.stringify({ name: f.name, size: f.size, type: f.type }, null, 2);
+    });
 
+    document.getElementById("btn").onclick = async () => {
+      const f = fileEl.files?.[0];
+      if (!f) return alert("请先选择图片");
 
-          </div>
-        </div>
-      </div>
-    </div>
+      out.textContent = "loading...";
+      const fd = new FormData();
+      fd.append("file", f);
 
-     
-  <button id="scroll-to-top" class="btn btn-top" aria-label="Scroll To Top">
-    <i class="fas fa-arrow-up"></i>
-  </button>
- 
-
-  </main>
-
-  <div class="footer-wrapper">
-  <div class="left-content"></div>
-  <div class="right-content">
-    <div>Copyright &copy;2026</div>
-    <div>Powered By <a target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> - Theme <a target="_blank" rel="noopener" href="https://github.com/thomasyu929/hexo-theme-peomas">Peomas</a></div>
-  </div>
-</div>
-
-  <div id="searchModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-scrollable modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Search</h5>
-        <button type="button" class="btn btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <div class="input-wrapper">
-          <i class="fas fa-search"></i>
-          <input id="search" class="search-input" type="text" placeholder="Input content to search..." />
-        </div>
-        <ul id="result" class="list-group result-wrapper">
-        </ul>
-      </div>
-    </div>
-  </div>
-</div>
-
-  
-<script src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
-
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5/dist/js/bootstrap.min.js"></script>
-
-
-<script src="/js/prism.js"></script>
-
-
-
-  
-<script src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js"></script>
-
-  
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.css">
-
-  
-<script src="/js/nprogress.js"></script>
-
-
-
- 
-  
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tocbot/4.11.1/tocbot.min.js"></script>
-
-  
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tocbot/4.11.1/tocbot.css">
-
- 
-
-
-<script src="/js/event.js"></script>
-
-
-<script src="/js/search.js"></script>
-
-
-<script src="/js/plugin.js"></script>
-
-
-
+      // 你后端接口要支持这个路由（我之前给过 /api/image-info/upload）
+      const r = await fetch(`${API_BASE}/api/image-info/upload`, { method: "POST", body: fd });
+      out.textContent = JSON.stringify(await r.json(), null, 2);
+    };
+  </script>
 </body>
-
 </html>
+</div></article></div></main><footer><div class="copyright"><p>&copy; 2026 <a href="http://example.com">John Doe</a><br>Powered by <a href="https://hexo.io/" rel="noreferrer" target="_blank">Hexo</a></p></div></footer></div></div><script src="https://cdnjs.cloudflare.com/ajax/libs/barba.js/1.0.0/barba.min.js"></script><script>document.addEventListener('DOMContentLoaded', function() {
+    Barba.Pjax.start()
+})</script></body></html>
