@@ -137,8 +137,13 @@
   </div>
 
 <script>
-  // ✅ 你的 Zeabur API 域名（确认无误）
+  // ✅ 你的 Zeabur API 域名
   const API_BASE = "https://jokerface-api.zeabur.app";
+  const ANALYZE_PATH = "/api/analyze";
+  const HEALTHZ_PATH = "/healthz";
+
+  // 超时（ms）：避免“卡住 -> Failed to fetch”无法定位
+  const REQUEST_TIMEOUT_MS = 60_000;
 
   const fileEl = document.getElementById("file");
   const btn = document.getElementById("btn");
@@ -198,6 +203,12 @@
     noimg.style.display = "none";
   }
 
+  function setBusy(isBusy){
+    btn.disabled = isBusy || !currentFile;
+    fileEl.disabled = isBusy;
+    resetBtn.disabled = isBusy;
+  }
+
   function clearAll(){
     chat.innerHTML = "";
     fileEl.value = "";
@@ -208,28 +219,68 @@
     statusEl.textContent = "Status: waiting";
   }
 
-  // ✅ 调后端 API
-  async function analyzeRemote(file){
-    const fd = new FormData();
-    fd.append("file", file);
+  function prettyHintFromErrorMessage(msg){
+    const s = String(msg || "").toLowerCase();
+    if (s.includes("timeout") || s.includes("aborted")) {
+      return "可能是上传/推理超时：检查文件大小、后端处理耗时，或提高超时阈值。";
+    }
+    if (s.includes("failed to fetch")) {
+      return "浏览器网络层失败：常见原因是请求被中断/被扩展拦截/代理问题。请打开 DevTools→Network 看是否有请求发出。";
+    }
+    if (s.includes("mixed content")) {
+      return "混合内容：页面是 https，但请求走了 http。请确保 API_BASE 是 https。";
+    }
+    return "请打开 DevTools→Network，查看该请求的 Status/Type/Response（以及是否有 OPTIONS 预检）。";
+  }
 
-    const r = await fetch(`${API_BASE}/api/analyze`, {
+  // ✅ 核心：带超时的 fetch
+  async function fetchWithTimeout(url, options={}, timeoutMs=REQUEST_TIMEOUT_MS){
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(new Error("timeout")), timeoutMs);
+
+    try {
+      const res = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+        cache: "no-store",
+        credentials: "omit",
+      });
+      return res;
+    } finally {
+      clearTimeout(id);
+    }
+  }
+
+  // ✅ 调后端 API（上传 FormData；不要手动设置 Content-Type）
+  async function analyzeRemote(file){
+    const url = `${API_BASE}${ANALYZE_PATH}`;
+
+    const fd = new FormData();
+    // 显式带 filename（更稳）
+    fd.append("file", file, file.name);
+
+    const r = await fetchWithTimeout(url, {
       method: "POST",
       body: fd,
     });
 
-    // 兜底：避免 “Unexpected end of JSON input”
     const text = await r.text();
     let data;
     try { data = text ? JSON.parse(text) : {}; }
-    catch { data = { error: "Non-JSON response", raw: text.slice(0, 800) }; }
+    catch { data = { error: "Non-JSON response", raw: text.slice(0, 1200) }; }
 
     if (!r.ok) {
-      throw new Error(data?.error || `HTTP ${r.status}`);
+      const msg = data?.error || `HTTP ${r.status}`;
+      const err = new Error(msg);
+      err.http_status = r.status;
+      err.url = url;
+      err.payload = data;
+      throw err;
     }
     return data;
   }
 
+  // 文件选择
   fileEl.addEventListener("change", () => {
     const f = fileEl.files?.[0];
     if(!f) return;
@@ -240,25 +291,34 @@
     addBubble("you", "You", { filename: f.name, bytes: f.size, type: f.type }, false);
   });
 
+  // 点击分析
   btn.onclick = async () => {
     if(!currentFile) return;
 
-    btn.disabled = true;
+    setBusy(true);
     statusEl.textContent = "Status: analyzing...";
+
+    const analyzeUrl = `${API_BASE}${ANALYZE_PATH}`;
 
     try{
       const result = await analyzeRemote(currentFile);
       addBubble("bot", "Jokerface", result, true);
       statusEl.textContent = "Status: done";
     }catch(e){
+      const msg = String(e?.message || e);
+
       addBubble("bot", "Jokerface", {
-        error: String(e?.message || e),
-        hint: "Check: API healthz, domain, CORS, or Zeabur 502",
+        error: msg,
+        name: e?.name || "Error",
+        http_status: e?.http_status ?? null,
+        request_url: e?.url || analyzeUrl,
+        hint: prettyHintFromErrorMessage(msg),
         api_base: API_BASE
       }, true);
+
       statusEl.textContent = "Status: error";
     }finally{
-      btn.disabled = false;
+      setBusy(false);
     }
   };
 
@@ -276,11 +336,25 @@
     fileEl.dispatchEvent(new Event("change"));
   });
 
-  // ✅ 启动时检查 API 可达性（可选但很实用）
+  // 全局兜底：把未捕获错误也显示出来（避免“看起来像没反应”）
+  window.addEventListener("unhandledrejection", (ev) => {
+    addBubble("bot", "Jokerface", {
+      error: "Unhandled rejection",
+      detail: String(ev.reason?.message || ev.reason || ""),
+      hint: "请打开 DevTools→Console 看完整堆栈，并检查 Network 是否发出请求。"
+    }, true);
+  });
+
+  // ✅ 启动时检查 API 可达性：必须 JSON 且 ok:true
   (async ()=>{
+    const url = `${API_BASE}${HEALTHZ_PATH}`;
     try{
-      const r = await fetch(`${API_BASE}/healthz`, { method: "GET" });
-      if(!r.ok) throw new Error("healthz not ok");
+      const r = await fetchWithTimeout(url, { method: "GET" }, 8_000);
+      const text = await r.text();
+      let data = {};
+      try { data = text ? JSON.parse(text) : {}; } catch {}
+
+      if(!r.ok || data?.ok !== true) throw new Error("healthz not ok");
       apiState.textContent = "OK";
     }catch{
       apiState.textContent = "DOWN";
