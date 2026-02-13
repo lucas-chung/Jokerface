@@ -348,8 +348,24 @@
       fd.append("file", currentFile);
 
       try{
-        const r = await fetch(`${API_BASE}/api/analyze`, { method:"POST", body: fd });
-        const j = await r.json();
+          const r = await fetch(`${API_BASE}/api/analyze`, { method:"POST", body: fd });
+
+          const text = await r.text(); // 先拿原始文本
+          let j;
+          try {
+            j = text ? JSON.parse(text) : { error: "Empty response body" };
+          } catch {
+            j = { error: "Non-JSON response", status: r.status, body_preview: text.slice(0, 300) };
+          }
+
+          if (!r.ok) {
+            addBubble("assistant", "Jokerface", j, true);
+            meta.innerHTML = `<div><b>Status:</b> error</div><div>HTTP ${r.status}</div>`;
+            return;
+          }
+
+          addBubble("assistant", "Jokerface", j, true);
+
 
         if(!r.ok){
           addBubble("assistant", "Jokerface", { error: j.error || "Request failed" });
